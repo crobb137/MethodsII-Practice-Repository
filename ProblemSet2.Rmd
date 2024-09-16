@@ -1,0 +1,175 @@
+---
+title: "Problem Set 2"
+author: "Caroline Robbins"
+output:
+  pdf_document:
+    latex_engine: xelatex
+date: "2024-09-12"
+---
+
+Download dataset of IMDB movies (imdb top 2000 movies.csv) from the following 
+link or from a shared dropbox folder
+```{r}
+##Set working directory and bring in necessary libraries.
+setwd("C:/Users/crobb/Downloads")
+library(tidyverse)
+library(tinytex)
+
+##Load the IMDB Movies dataset into the workspace.
+raw_data <- read.csv("imdb_top_2000_movies.csv")
+```
+
+1. Create a function mins to hrs that would transform number of minutes into 
+number of hours. Apply this function to the variable Duration to create a new 
+variable Duration in hrs
+```{r}
+mins_to_hrs <- function(x){
+  x/60
+}
+
+raw_data$Duration_in_hrs <- mins_to_hrs(raw_data$Duration)
+```
+
+
+2. Using R show how many directors (unique entries) ended up in this list of 
+movies.
+```{r}
+n_distinct(raw_data$Director)
+##918 distinct values for Director, meaning 918 different directors are on this 
+##list.
+```
+
+3. Which director’s movies on average have the highest IMDB.Rating score? (To
+answer this question you can either use a for loop structure or base R functions
+there is no coding requirement of how you calculate that. But you do have to use
+R coding to show how you derived the answer to this question.)
+```{r}
+class("IMDB.Rating")
+as.numeric(raw_data$IMDB.Rating)
+
+director_avg <- raw_data %>%
+  group_by(Director) %>%
+  summarize(director_rating = mean(IMDB.Rating))
+View(director_avg)
+
+top_directors <- director_avg %>%
+  slice_max(director_rating, n = 10)
+View(top_directors)
+```
+
+4. Create a new vector imdb rating that includes a set of unique values of the 
+variable IMDB.Rating. Using R show what the length of this vector is.
+```{r}
+imdb_rating <- unique(raw_data$IMDB.Rating)
+
+length(imdb_rating)
+##The length of the vector is 66 values.
+```
+
+5. Using a for loop applied to each element of the imdb rating vector, create a 
+new vector with the rounded value of each element to the closest integer 
+(eg., 1.4 → 1).
+```{r}
+##Create the empty vector for the loop.
+rounded_rating <- c()
+
+##Specify the conditions and effects of the loop.
+for (i in imdb_rating){
+  imdb_rating = ceiling(i)
+  rounded_rating <- c(rounded_rating, imdb_rating)
+  print(rounded_rating)
+}
+
+##View the new vector.
+rounded_rating
+```
+
+Task 2
+According to J. Angrist and J.-S. Pischke, what are the four most common 
+questions we should position in the process of inference identification?
+List all four, you can use your own words.
+
+The four questions J. Angrist and J.-S. Pischke claim we should position several 
+questions during the process of inference identification. The first asks: "What 
+is the causal relationship we are interested in?" The second is: "What 
+experiment could ideally be designed and applied to observe the causal effect 
+we are interested in?" The third question is: "What is the strategy to identify
+this causal relationship in the data?" The fourth question is: "How are you 
+engaging in statistical inference with regard to your data?"
+
+Directly quoting the authors, the four questions are:
+1. What is the causal relationship of interest?
+2. What experiment could ideally be used to capture the causal effect of 
+interest?
+3. What is your identification strategy?
+4. What is your mode of statistical inference?
+
+Task 3
+Imagine you are conducting a randomized experiment to measure the impact of a 
+new educational program on student test scores. You have a population of 1000 
+students, and you want to randomly assign half of them to a treatment
+group that will use a new program, while the other half will be assigned to a 
+control group that will not use a new program.
+The test scores for both groups are assumed to follow a normal distribution:
+• The control group scores follow a normal distribution with a mean of 70 and a 
+standard deviation of 10.
+• The treatment group scores are expected to increase by 5 points on average due 
+to the program, so their scores
+follow a normal distribution with a mean of 75 and a standard deviation of 10.
+
+1. Write an R code that would generate a random sample of test scores for both 
+the treatment and control groups, using the normal distribution parameters 
+described above.
+```{r}
+set.seed(137)
+treatment <- sample(c(rep(1, 1000/2), rep(0, 1000/2)), size = 1000, replace = 
+                      FALSE)
+
+control <- rnorm(treatment == 0, mean = 70, sd = 10)
+treat <- rnorm(treatment == 1, mean = 75, sd = 10)
+```
+
+2. Simulate the random assignment of 1000 students to the treatment and control 
+groups. Make sure each student has an equal chance of being assigned to either 
+group (Hint: check the code that we worked through in class to get an idea of 
+how you can code that.)
+```{r}
+set.seed(137)
+treatment <- sample(c(rep(1, 1000/2), rep(0, 1000/2)), size = 1000, replace = 
+                      FALSE)
+control <- rnorm(treatment == 0, mean = 70, sd = 10)
+treat <- rnorm(treatment == 1, mean = 75, sd = 10)
+```
+
+3. Calculate average treatment effect (ATE) of the new program on the test 
+scores
+```{r}
+##True ATE (treatment mean - control mean)
+true_ATE <- mean(75-70)
+true_ATE ##5
+
+est_ATE <- mean(treat - control)
+est_ATE ##5.288144
+
+```
+
+4. Create a histogram or a density plot to visualize the distribution of test 
+scores for both — treatment and control — groups. Overlay the plots to compare
+the distributions.
+```{r}
+##visualize control hisogram
+chist <- hist(control)
+
+##visualize treatment histogram
+thist <- hist(treat)
+
+##Combine both plots
+bothist <- ggplot() +
+ geom_histogram(aes(x = treat, fill = "treat"), alpha = 0.5) +
+ geom_histogram(aes(x = control, fill = "control"), alpha = 0.5) +
+ scale_fill_manual(values = c("treat" = "red", "control" = "blue")) +
+ labs(title = "Effect of Treatment on Test Score", x = "Scores", y = "Frequency"
+      )
+print(bothist)
+```
+
